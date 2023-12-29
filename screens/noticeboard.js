@@ -2,15 +2,33 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import NoticeboardService from '../services/noticeboard_services';
 import moment from 'moment-timezone';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const NoticeBoard = (route) => {
     const [loading, setLoading] = useState(true);
-    const [StudentNotice, setStudentNotice] = useState([]);
+    const [studentNotice, setStudentNotice] = useState([]);
+    const [Is_parent,setIs_parent] = useState()
+    const [Is_teacher,setIs_teacher] = useState()
 
     const { selectedStudentId } = route.route.params;
+    const { selectedClassId } = route.route.params;
+    console.log(selectedClassId,"jjjjjjjjjjjjjjjjjjjjjj")
+
+    const usertype = async()=>{
+        let is_parent = await AsyncStorage.getItem('is_parent');
+        const isParentBoolean = is_parent === 'true';
+        let is_teacher = await AsyncStorage.getItem('is_teacher');
+        const isTeacherBoolean = is_teacher === 'true';
+        console.log(is_teacher,"is_teacher")
+        console.log(isTeacherBoolean,"isTeacherBoolean")
+        setIs_parent(isParentBoolean);
+        setIs_teacher(isTeacherBoolean)
+        
+      }
 
     const getStudentNotice = async () => {
         const api = new NoticeboardService();
+        if(Is_parent){
         try {
             const res = await api.FetchNotice(selectedStudentId);
             console.log(res.data.data, "res");
@@ -20,11 +38,29 @@ const NoticeBoard = (route) => {
         } finally {
             setLoading(false);
         }
+    }
+    };
+
+    const getTeacherNotice = async () => {
+        const api = new NoticeboardService();
+        if(Is_teacher){
+        try {
+            const res = await api.FetcheacherNotice(selectedClassId);
+            console.log(res.data.data, "res");
+            setStudentNotice(res.data.data);
+        } catch (error) {
+            console.error('Error fetching notice data:', error);
+        } finally {
+            setLoading(false);
+        }
+    }
     };
 
     useEffect(() => {
+        usertype()
         getStudentNotice();
-    }, []);
+        getTeacherNotice();
+    }, [Is_parent,Is_teacher]);
 
     const formatDateTime = (dateTimeString) => {
         const dateTime = moment(dateTimeString).tz('Asia/Karachi'); // Set the time zone to Pakistan Standard Time
@@ -39,13 +75,22 @@ const NoticeBoard = (route) => {
         );
     }
 
+    // Check if there are no records
+    if (studentNotice.length === 0) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.noRecordsText}>No records found.</Text>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
                 {/* <Text style={styles.headerText}></Text> */}
             </View>
             <FlatList
-                data={StudentNotice}
+                data={studentNotice}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
                     <View style={styles.noticeContainer}>
@@ -110,6 +155,12 @@ const styles = StyleSheet.create({
     noticeCreateUi: {
         fontSize: 14,
         color: 'green',
+    },
+    noRecordsText: {
+        fontSize: 18,
+        textAlign: 'center',
+        marginTop: 20,
+        color: 'black',
     },
 });
 

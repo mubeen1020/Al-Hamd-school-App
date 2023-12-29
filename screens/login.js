@@ -63,39 +63,7 @@ function LoginScreen({ navigation }) {
       password: password,
     };
 
-    const apidata = new UsersService();
-
-    try {
-      setLoading(true);
-
-      const res = await apidata.loginUser(formData);
-      console.log(res.data)
-      if (res.data && res.data.result && res.data.result.access_token) {
-        const accessToken = res.data.result.access_token;
-        const setCookieHeader = res.headers['set-cookie'];
-        const sessionId = `session_id=${setCookieHeader[0].split(';')[0].split('=')[1]}`;
-        console.log(sessionId);
-
-        const partnerId = res.data.result.partner_id;
-        console.log(partnerId)
-        AsyncStorage.setItem('access_token', accessToken);
-        AsyncStorage.setItem('partner_id', String(partnerId));
-        AsyncStorage.setItem('Cookie', sessionId);
-
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        setLoading(false);
-        navigation.navigate('Drawer');
-    } else {
-        setLoading(false);
-        showAlert('Login failed. Invalid response from the server.');
-    }
-    } catch (error) {
-      setLoading(false);
-      showAlert('Login failed. Please check your credentials.');
-      console.log(error);
-    }
-
-    let formdata2 = {
+     let formdata2 = {
       "jsonrpc": "2.0",
       "params": {
         "db": "AL-HAMD-SCHOOL-DB",
@@ -103,15 +71,53 @@ function LoginScreen({ navigation }) {
         "password": `${password}`,
       }
     }; 
- 
+
+    const apidata = new UsersService();
+
     try {
-      const responed = await apidata.AuthUser(formdata2);
-     
+      setLoading(true);
+
+      const res = await apidata.loginUser(formData);
+      console.log(res.data)
+      if (res.data && res.data.result && res.data.result.access_token && res.data.result.is_in_teacher || res.data.result.is_in_parent) {
+        const accessToken = res.data.result.access_token;
+        const is_teacher = res.data.result.is_in_teacher;
+        const is_parent = res.data.result.is_in_parent;
+        const setCookieHeader = res.headers['set-cookie'];
+        const sessionId = `session_id=${setCookieHeader[0].split(';')[0].split('=')[1]}`;
+        const partnerId = res.data.result.partner_id;
+        AsyncStorage.setItem('access_token', accessToken);
+        AsyncStorage.setItem('partner_id', String(partnerId));
+        AsyncStorage.setItem('Cookie', sessionId);
+        AsyncStorage.setItem('is_teacher', String(is_teacher));
+        AsyncStorage.setItem('is_parent', String(is_parent));
+        
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        setLoading(false);
+       
+        navigation.navigate('Drawer');
+        setUsername('')
+        setPassword('')
+    } else {
+        setLoading(false);
+        showAlert('Login failed. Please check your credentials.');
+    }
     } catch (error) {
       setLoading(false);
       showAlert('Login failed. Please check your credentials.');
       console.log(error);
     }
+
+   
+ 
+    // try {
+    //   const responed = await apidata.AuthUser(formdata2);
+     
+    // } catch (error) {
+    //   setLoading(false);
+    //   showAlert('Login failed. Please check your credentials.');
+    //   console.log(error);
+    // }
    
 
   };
@@ -120,6 +126,11 @@ function LoginScreen({ navigation }) {
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
+
+  useEffect(()=>{
+    setUsername('')
+    setPassword('')
+  },[])
 
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContainer}>
@@ -130,14 +141,18 @@ function LoginScreen({ navigation }) {
         </Text>
       </View>
       <View style={styles.formContainer}>
-        <CSTextField
+        <CSTextField 
+         value={username}
           placeholder="Username"
           onChangeText={(text) => setUsername(text)}
+          imageSource={require('../assets/images/user.png')}
         />
         <CSTextField
+         value={password}
           placeholder="Password"
           onChangeText={(text) => setPassword(text)}
           secureTextEntry={true} 
+          imageSource={require('../assets/images/lock.png')}
         />
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
           {loading ? (

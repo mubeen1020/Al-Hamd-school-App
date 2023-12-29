@@ -8,7 +8,6 @@ const access_token = async () => {
 };
 const Cookie = async ()=>{
     let Cookie = await AsyncStorage.getItem('Cookie');
-    console.log(Cookie)
     return Cookie
 }
 
@@ -16,8 +15,6 @@ const apichatClient = async () => {
     const API_URL = getSecrets.API_URL;
     const accessToken = await access_token();
     const cookie = await Cookie();
-    console.log(accessToken,"accessToken")
-    console.log(cookie,"cookie")
     return axios.create({
         baseURL: API_URL,
         responseType: "json",

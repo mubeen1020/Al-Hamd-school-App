@@ -32,10 +32,11 @@ const ContactUs = () => {
     }
     return (
         <>
-            <View style={styles.header}>
-                {/* <Text style={styles.headerText}>Contact Us</Text> */}
+             <View style={styles.header}>
+                {/* <Text style={styles.headerText}></Text> */}
             </View>
             <View style={styles.container}>
+           
                 <View style={styles.section}>
                     <Text style={styles.header2}>{Title}</Text>
                     <Text style={styles.text}>{Description}</Text>

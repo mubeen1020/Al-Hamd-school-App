@@ -14,7 +14,7 @@ const apigetClient = async () => {
         baseURL: API_URL,
         responseType: "json",
         headers: {
-            'access_token': `Bearer ${accessToken}`,
+            'access_token':  accessToken,
         },
     });
 };

@@ -31,10 +31,10 @@ const Introduction = () => {
     return (
         <>
             <View style={styles.header}>
-                {/* <Text style={styles.headerText}>Introductions</Text> */}
+                {/* <Text style={styles.headerText}></Text> */}
             </View>
             <ScrollView style={styles.container}>
-
+          
                 <View style={styles.header1}>
                     <Image
                         source={require('../assets/images/logo22.png')}

@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState, useEffect } from 'react';
 import { View, Image, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
 import Swiper from 'react-native-swiper';
@@ -42,6 +43,10 @@ const SplashScreen = ({ navigation }) => {
     setLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
     setLoading(false);
+    AsyncStorage.removeItem('access_token');
+    AsyncStorage.removeItem('partner_id');
+    AsyncStorage.removeItem('Cookie');
+    AsyncStorage.removeItem('Student_id');
     navigation.navigate('LoginScreen');
   };
 
@@ -92,7 +97,7 @@ const SplashScreen = ({ navigation }) => {
             <ActivityIndicator size="small" color="#fff" />
           </Animated.View>
         ) : (
-          <Text style={styles.buttonText}>Continued</Text>
+          <Text style={styles.buttonText}>Continue</Text>
         )}
       </TouchableOpacity>
     </View>
@@ -161,6 +166,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+    width:'100%',
+    textAlign:'center'
   },
 });
 

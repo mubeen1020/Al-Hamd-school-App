@@ -15,8 +15,8 @@ const Chat = () => {
     const [AlignMap, setAlignMap] = useState({});
     const [Border_Radius, setBorder_Radius] = useState({});
     const [RESID, setRESID] = useState('')
-    const flatListRef = useRef(null);
     const [attachment, setAttachment] = useState(null);
+    const [Partner_ID,setPartner_ID] = useState()
 
 
     const getResID = async () => {
@@ -24,11 +24,12 @@ const Chat = () => {
 
         try {
             let partnerId = await AsyncStorage.getItem('partner_id');
-            console.log(partnerId,"partnerId")
             const res = await api.FetchResdID(partnerId);
             const ResID = res.data.data[0].id;
+            console.log(ResID,partnerId,"kkkkkkkkkkkkkkkkkkkkkkkkkkk")
             getMessage(ResID);
             setRESID(ResID)
+            setPartner_ID(partnerId)
         } catch (error) {
             console.error('Error fetching res data:', error);
         } 
@@ -39,16 +40,7 @@ const Chat = () => {
 
         try {
             const res = await api.FetchMessage(id);
-            const iddata = res.data.data.map((data)=>{
-             return data.attachment_ids
-            }) 
-            console.log(iddata,"iddata")
-            for (let i = 0; i < iddata.length; i++) {
-                const attachments = iddata[i];
-                const attachmentsLength = attachments.length;
-            
-                console.log(`Attachments for item ${i + 1}: ${attachmentsLength}`);
-            }
+           
             const formattedMessages = res.data.data.map(item => ({
                 id: item.id,
                 text: item.body,
@@ -60,9 +52,7 @@ const Chat = () => {
             }));
             setMessages(formattedMessages);
             createColorMap(formattedMessages);
-            if (flatListRef.current) {
-                flatListRef.current.scrollToEnd({ animated: true });
-            }
+            
         } catch (error) {
             console.error('Error fetching messages:', error);
         } finally {
@@ -71,9 +61,6 @@ const Chat = () => {
     }; 
 
     const postmessage = async () => {
-        console.log(attachment,"attachment")
-        console.log(attachment.base64,"attachmentbase64")
-        console.log(attachment.name,"attachment.name")
         let partnerId = await AsyncStorage.getItem('partner_id');
         
         let formData = {
@@ -83,15 +70,15 @@ const Chat = () => {
             model: "mail.channel",
             res_id: RESID,
             subtype_id: 1,
-            attachment_ids: [
+            attachment_ids:attachment? [
                 [0, false, {
-                   name: attachment.name,  
+                   name: attachment.name || '',  
                    datas: attachment.base64, 
                    res_model: "mail.channel",
                    res_id: RESID,
                    type: "binary"
                 }]
-             ]
+             ]:[]
         };
         const jsonBody = JSON.stringify(formData);
 
@@ -103,21 +90,74 @@ const Chat = () => {
             const res = await apidata.SentMessage(jsonBody);
             getMessage(RESID)
             setInputMessage('');
-            console.log(res.data.result)
+            setAttachment(null);
+        } catch (error) {
+            console.log(error);
+        } 
+    }
+
+    const getAttachment = async (id) => {
+        const apidata = new ChatService();
+    
+        try {
+            const res = await apidata.getAttachments(id);
+            const attachmentData = res.data.data;
+    
+            if (attachmentData.length > 0) {
+                saveBase64Image(attachmentData[0].datas, attachmentData[0].name);
+            } else {
+                console.error('No attachment data found for ID:', id);
+            }
         } catch (error) {
             console.log(error);
         }
-    }
+    };
 
+    const saveBase64Image = async (base64, fileName) => {
+        const path = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+        let base64Data = base64.replace(/^b('|")/, '').replace(/('|")$/, '');
 
-    useEffect(() => {
+        try {
+            await RNFS.writeFile(path, base64Data, 'base64');
+            console.log('Image saved successfully:', path);
+        } catch (error) {
+            console.log(error.message);
+        }
+    };
+    
+    const downloadfile = (id) => {
+        console.log(id, 'kklllll');
+        getAttachment(id);
+    };
+
+    const [Is_parent,setIs_parent] = useState()
+    const [Is_teacher,setIs_teacher] = useState()
+   
+    const usertype = async()=>{
+        let is_parent = await AsyncStorage.getItem('is_parent');
+        const isParentBoolean = is_parent === 'true';
+        let is_teacher = await AsyncStorage.getItem('is_teacher');
+        const isTeacherBoolean = is_teacher === 'true';
+        console.log(is_teacher,"is_teacher")
+        console.log(isTeacherBoolean,"isTeacherBoolean")
+        setIs_parent(isParentBoolean);
+        setIs_teacher(isTeacherBoolean)
+      }
+
+    useEffect(() => {  
         getResID();
+       
         //  setInterval(() => {
         //     getMessage(RESID);
         //   }, 15000); 
       
           
     }, []);
+
+    useEffect(() => {
+        usertype()
+    
+      }, [Is_parent,Is_teacher]);
 
     
 
@@ -136,20 +176,15 @@ const Chat = () => {
         let partnerId = await AsyncStorage.getItem('partner_id');
         formattedMessages.forEach((message) => {
             if (!colors[message.authorId]) {
-                if (Object.keys(colors).length === 0) {
-                    colors[message.authorId] = '#868a87';  
-                    align[message.authorId] = 'flex-start';
-                    borderradius[message.authorId] = 15;
-                } else if (Object.keys(colors).length === 1) {
+                if (message.authorId === Number(partnerId)) {
                     colors[message.authorId] = '#0d7026';
                     align[message.authorId] = 'flex-end';
                     borderradius[message.authorId] = 15
-                } else {  
-                    colors[message.authorId] = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
-                    align[message.authorId] = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
-                    const numericValue = parseInt(`#${Math.floor(Math.random() * 16777215)}`, 16);
-                    borderradius[message.authorId] = isNaN(numericValue) ? 15 : numericValue;
-
+                } else {
+                    
+                    colors[message.authorId] = '#868a87';  
+                    align[message.authorId] = 'flex-start';
+                    borderradius[message.authorId] = 15;
                 }
             }
         }); 
@@ -202,7 +237,6 @@ const Chat = () => {
             const result = await DocumentPicker.pick({
                 type: [DocumentPicker.types.allFiles], 
             });
-            console.log(result[0].uri,"hhhhhhhhhhhhhhh");
 
             const base64Data = await RNFS.readFile(result[0].uri, 'base64');
             
@@ -232,14 +266,13 @@ const Chat = () => {
         const displayTime = formatTimestamp(item.time);
         const textWithoutHTML = removeHTMLTags(item.text);
         const Attachmentdata = item.attachment
-
         return (
             <View style={[
                 styles.messageContainer,
                 { backgroundColor: messageColor, alignSelf: messageAlign ,borderRadius:messageRadius,},
                 isCurrentUser ? styles.currentUserMessage : styles.partnerMessage,
                 isCurrentUser ,
-            ]}>
+            ]}> 
                 <View style={styles.nameTimeText}>
                     <Text style={styles.senderName}>{item.sender}</Text>
                     <Text style={styles.messageTime}>{displayTime}</Text>
@@ -248,9 +281,18 @@ const Chat = () => {
                     {textWithoutHTML}
                 </Text>
                 {Attachmentdata && Attachmentdata.length > 0 && ( 
-                     <Text style={styles.messageText}>
-                     Attachment
-                 </Text>
+                    <>
+                      <Text style={{color:'white',fontWeight:'bold'}} >Attachment</Text>
+                    <TouchableOpacity style={styles.downloadButton} onPress={() => downloadfile(Attachmentdata[0])}>
+                       
+                    <Image
+          source={require('../assets/images/download2.gif')} 
+          resizeMode="cover"
+          style={styles.downloadIcon}
+        />
+                </TouchableOpacity>
+                </>
+                
            )}
 
             </View>
@@ -258,21 +300,17 @@ const Chat = () => {
     };
     return (
         <View style={styles.container}>
-             <View style={styles.header}>
-                {/* <Text style={styles.headerText}>Contact Us</Text> */}
+              <View style={styles.header}>
+                {/* <Text style={styles.headerText}></Text> */}
             </View>
             {/* Chat Messages */}
             <FlatList
                 data={messages}
                 renderItem={renderMessage}
                 keyExtractor={(item) => item.id.toString()}
-                inverted={false}
+                // inverted={true}
                 onScrollBeginDrag={() => setInputMessage('')}
-                onContentSizeChange={() => {
-                    flatListRef.current.scrollToEnd({ animated: true });
-                }}
-                ref={flatListRef}
-            />
+            /> 
 
             {/* Message Input */}
             <View style={styles.inputContainer}>
@@ -281,7 +319,6 @@ const Chat = () => {
                     value={inputMessage}
                     onChangeText={(text) => setInputMessage(text)}
                     placeholder="Type a message..."
-                // onSubmitEditing={/* handleSendMessage function */}
                 />
                <TouchableOpacity onPress={pickDocument} >
                <Image
@@ -304,6 +341,17 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#F5F5F5',
     },
+    downloadButton: {
+  position: 'absolute',
+  bottom: 0,
+  right: 0,
+  padding: 10,
+},
+downloadIcon: {
+  width: 60,
+  height: 50,
+//   tintColor: 'white', // Adjust the color as needed
+},
     image: {
         width: 40,
         height: 30,

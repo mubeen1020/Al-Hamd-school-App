@@ -1,7 +1,7 @@
 // CSTextField.js
 
 import React, { useState } from 'react';
-import { View, TextInput, Text, Image, StyleSheet } from 'react-native';
+import { View, TextInput, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 
 function CSTextField(props) {
   const {
@@ -15,7 +15,11 @@ function CSTextField(props) {
     onChangeText,
     placeholderTextColor,
     imageSource, 
-    secureTextEntry
+    secureTextEntry,
+    value,
+    numberOfLines,
+    onPress
+    
   } = props;
 
   const [isFocused, setIsFocused] = useState(false);
@@ -34,7 +38,7 @@ function CSTextField(props) {
   ];
 
   return (
-    <View style={styles.inputContainer}>
+    <TouchableOpacity onPress={onPress} disabled={!onPress} style={styles.inputContainer}>
       <Text style={placeholderStyle}>{placeholder}</Text>
       <TextInput
         placeholder=""
@@ -45,10 +49,13 @@ function CSTextField(props) {
         multiline={multiline}
         onChangeText={onChangeText}
         placeholderTextColor={placeholderTextColor}
-        style={styles.input}
+        style={[styles.input, multiline && { height: numberOfLines }]}
         onFocus={handleFocus}
         onBlur={handleBlur}
         secureTextEntry={secureTextEntry}
+        value={value}
+        numberOfLines={numberOfLines}
+        
       />
       {imageSource && (
         <Image
@@ -57,7 +64,7 @@ function CSTextField(props) {
           style={styles.image}
         />
       )}
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -78,7 +85,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'black',
     paddingVertical: 5,
-    flex: 1, // Added flex to TextInput for it to take the available space
+    flex: 1, 
   },
   placeholderText: {
     position: 'absolute',

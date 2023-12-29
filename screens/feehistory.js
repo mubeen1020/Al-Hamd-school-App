@@ -5,7 +5,7 @@ import moment from 'moment-timezone';
 
 const FeeHistory = (route) => {
     const [loading, setLoading] = useState(true);
-    const [StudentFee, setStudentFee] = useState([]);
+    const [studentFee, setStudentFee] = useState([]);
     const { selectedStudentId } = route.route.params;
 
     const getStudentFee = async () => {
@@ -16,7 +16,7 @@ const FeeHistory = (route) => {
             setStudentFee(res.data.data);
         } catch (error) {
             console.error('Error fetching notice data:', error);
-        }  finally {
+        } finally {
             setLoading(false);
         }
     };
@@ -33,9 +33,17 @@ const FeeHistory = (route) => {
         );
     }
 
-    const filteredStudentFee = StudentFee.filter(
-        (item) => item.state === 'paid' || item.state === 'pending' || item.state === 'confirm'||item.state === 'cancel'
+    const filteredStudentFee = studentFee.filter(
+        (item) => item.state === 'paid' || item.state === 'pending' || item.state === 'confirm' || item.state === 'cancel'
     );
+
+    if (filteredStudentFee.length === 0) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.noRecordsText}>No records found.</Text>
+            </View>
+        );
+    }
 
     const renderItem = ({ item }) => {
         const getStatusColor = (status) => {
@@ -83,7 +91,7 @@ const FeeHistory = (route) => {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                {/* <Text style={styles.headerText}>Fee History</Text> */}
+                {/* <Text style={styles.headerText}></Text> */}
             </View>
             <FlatList
                 data={filteredStudentFee}
@@ -151,7 +159,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         color: 'green',
-        width:'100%',
+        width: '100%',
     },
     number: {
         fontSize: 16,
@@ -163,18 +171,24 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         alignSelf: 'flex-end',
         marginTop: 5,
-        width:'100%',
+        width: '100%',
     },
     state: {
         fontSize: 16,
-        fontWeight:'bold',
+        fontWeight: 'bold',
         textAlign: 'center',
-        color:'white'
+        color: 'white'
     },
     time: {
         fontSize: 14,
         color: 'black',
-        textAlign:'center'
+        textAlign: 'center'
+    },
+    noRecordsText: {
+        fontSize: 18,
+        textAlign: 'center',
+        marginTop: 20,
+        color: 'black',
     },
 });
 

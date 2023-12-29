@@ -35,6 +35,17 @@ class ChatService {
             throw error; 
         }
     }
+
+    getAttachments = async (id) => {
+        try {
+            const client = await apigetClient();
+            const response = await client.get(`api/ir.attachment?domain=[('id', 'in', [${id}])]`);
+            return response;
+        } catch (error) {
+            console.error('Error in getAttachments:', error);
+            throw error;  
+        }
+    }
     
     
    
